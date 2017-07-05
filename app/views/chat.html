@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Welcome to My Chat</title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+    crossorigin="anonymous">
+</head>
+
+<body>
+  <!-- 
+  <div class="menu">
+    <div class="name"><label id="uName"></label></div>
+    <div class="last">Online</div>
+    <div class="type-text">Ishaan Typing</div>
+    <div>Logout</div>
+  </div>
+  -->
+  <div class="row menu">
+    <div class="col-md-4 head-text"><label id="uName"></label>
+      <p>Online</p>
+    </div>
+    <div class="col-md-4 head-text"><label id="typeName"></label></div>
+    <div class="col-md-2 head-text ">
+      <button type="button" class="btn btn-default" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <ol id="messages" class="chat">
+
+
+  </ol>
+  <footer class="footer">
+    <div class="container">
+      <form action="">
+        <input id="message" class="textarea" type="text" placeholder="Type here!" />
+        <button class="btn btn-primary submit-btn">Send</button>
+      </form>
+    </div>
+  </footer>
+
+</body>
+<script src="http://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="http://momentjs.com/downloads/moment.min.js"></script>
+<script>
+  $(document).ready(function () {
+    function getMessages() {
+      $.ajax('http://localhost:3000/chat/list', {
+
+        success: function (response) {
+          if (response.status == 200) {
+            /*     
+               $.each(response.data, function (i, item) {
+                    $("#messages").append('<li><p class="chat-text">' + item.userName + '</p><br><p class="chat-text">' +item.message + '</p></li>');
+               });                    
+           **/
+            var htmlContent = "";
+            $.each(response.data, function (i, item) {
+              //  alert(moment(item.createdDate, "YYYY-DD-MM"));
+              //  temp=(moment(item.createdDate, "Do MMM YYYY"));
+              temp = ""
+              htmlContent += '<li><div class="msg"><p>' + item.userName + '</p><p>' + item.message + '</p><p>' + temp + '</p></div></li>';
+            });
+            $('#messages').append(htmlContent);
+          }
+
+
+        },
+
+        error: function (request, errorType, errorMessage) {
+
+          alert(errorMessage);
+        }
+      }
+      );
+    }
+    getMessages();
+  });
+  var uName = sessionStorage.getItem('uName');
+  $("#uName").append(uName);
+
+  var socket = io();
+  if (uName != null) {
+    socket.emit('user', uName);
+  }
+  function logout() {
+    console.log("Logout clicked");
+    socket.emit('logout', uName);
+    window.location.href = "/logout";
+  }
+  $('form').submit(function () {
+    // this is how a message is emitted
+    // $('#m').val() is used to get the value of the input text box
+
+    socket.emit('chat message', $('#message').val());
+    $('#message').val('');
+    return false;
+  });
+
+
+  socket.on('chat message', function (msg, user) {
+    console.log(user);
+    if (user != undefined) {
+      var htmlContent = "";
+      temp = "";
+      htmlContent += '<li><div class="msg"><p>' + user + '</p><p>' + msg + '</p><p>' + temp + '</p></div></li>';
+      $('#messages').append(htmlContent);
+    } else {
+      $("#messages").append('<li><p class="chat-text">' + msg + '</p></li>');
+    }
+    // $('#messages').append($('<li><p class="chat-text">').text(msg));
+  });
+  //Typing code
+  var timeout;
+
+  function timeoutFunction() {
+    typing = false;
+    socket.emit("typing", '',false);
+  }
+
+  $('#message').keyup(function () {
+    console.log('happening');
+    typing = true;
+    socket.emit('typing', uName,true);
+    clearTimeout(timeout);
+    timeout = setTimeout(timeoutFunction, 2000);
+  });
+  socket.on('type message', function (msg) {
+    $("#typeName").html(msg);
+  });
+
+</script>
+
+</html>
