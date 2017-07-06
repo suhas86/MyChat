@@ -7,7 +7,7 @@ var http = require('http').Server(app);
 var bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '10mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
-
+const PORT=process.env.PORT || 3000;
 //Define the configuration of the database
 var dbPath = "mongodb://localhost/chattest";
 
@@ -84,7 +84,7 @@ app.use(function (req, res, next) {
 
 });//end of user login
 
-http.listen(3000, function () {
-    console.log('Example app listening on port 3000!');
+http.listen(PORT, function () {
+    console.log('Example app listening on port '+PORT);
 });
 
